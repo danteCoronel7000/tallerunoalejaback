@@ -3,6 +3,7 @@ package com.taller1.colegioJMA2.controller;
 import com.taller1.colegioJMA2.configuration.JwtUtil;
 import com.taller1.colegioJMA2.dto.LoginResponseDTO;
 import com.taller1.colegioJMA2.dto.PasswordUpdateRequestDTO;
+import com.taller1.colegioJMA2.dto.UsuarioPageDto;
 import com.taller1.colegioJMA2.model.DatosModel;
 import com.taller1.colegioJMA2.model.PersonalModel;
 import com.taller1.colegioJMA2.model.UsuariosModel;
@@ -234,4 +235,30 @@ public class UsuariosController {
         Page<UsuariosModel> usuarios = usuarioservice.getUsuarioPaginados(pageable);
         return new ResponseEntity<>(usuarios, HttpStatus.OK);
     }
+	@GetMapping("/get/paginado/dto")
+	public ResponseEntity<Page<UsuarioPageDto>> getAllUsuarioPaginadoDto(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "5") int size,
+			@RequestParam(defaultValue = "login") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir
+	) {
+		Pageable pageable = PageRequest.of(
+				page,
+				size,
+				sortDir.equalsIgnoreCase("desc") ?
+						Sort.by(sortBy).descending() :
+						Sort.by(sortBy).ascending()
+		);
+
+		Page<UsuarioPageDto> usuarios = usuarioservice.getUsuarioPaginadosDto(pageable);
+		return new ResponseEntity<>(usuarios, HttpStatus.OK);
+	}
+
+	// Nuevo endpoint para buscar usuarios
+	@GetMapping("/buscar")
+	public ResponseEntity<List<UsuarioPageDto>> buscarUsuarios(
+			@RequestParam(required = false) String nombre) {
+		List<UsuarioPageDto> usuarios = usuarioservice.buscarUsuariosPorNombre(nombre);
+		return ResponseEntity.ok(usuarios);
+	}
 }

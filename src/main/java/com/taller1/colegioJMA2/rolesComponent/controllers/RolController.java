@@ -1,10 +1,8 @@
 package com.taller1.colegioJMA2.rolesComponent.controllers;
 
 
-import com.taller1.colegioJMA2.rolesComponent.dto.CreateRoleRequest;
-import com.taller1.colegioJMA2.rolesComponent.dto.CreateRoleResponse;
-import com.taller1.colegioJMA2.rolesComponent.dto.RolDto;
-import com.taller1.colegioJMA2.rolesComponent.dto.UpdateRolRequest;
+import com.taller1.colegioJMA2.model.UsuariosModel;
+import com.taller1.colegioJMA2.rolesComponent.dto.*;
 import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
 import com.taller1.colegioJMA2.rolesComponent.services.RolService;
 import lombok.RequiredArgsConstructor;
@@ -117,6 +115,30 @@ public class RolController {
     public ResponseEntity<List<RolDto>> getRolesPorEstado(@PathVariable String estado) {
         List<RolDto> roles = rolService.findByEstado(estado);
         return ResponseEntity.ok(roles);
+    }
+
+    // Obtener roles de un usuario específico
+    @GetMapping("/usuario/{login}")
+    public List<RolDto> getUserRoles(@PathVariable String login) {
+        return rolService.getRolesForUser(login);
+    }
+
+    // Obtener roles que NO están asignados a ningún usuario
+    @GetMapping("/sin/asignar")
+    public List<RolDto> getUnassignedRoles() {
+        return rolService.getUnassignedRoles();
+    }
+
+    // Obtener todos los roles que están asignados a cualquier usuario
+    @GetMapping("/asignados")
+    public List<RolDto> getRolesAssignedToAnyUser() {
+        return rolService.getRolesAssignedToAnyUser();
+    }
+
+    @PostMapping("/asignar/roles")
+    public ResponseEntity<?> asignarRoles(@RequestBody AsignarRolesUsuarioDTO dto) {
+        UsuariosModel actualizado = rolService.asignarRoles(dto);
+        return ResponseEntity.ok(actualizado);
     }
 
 }

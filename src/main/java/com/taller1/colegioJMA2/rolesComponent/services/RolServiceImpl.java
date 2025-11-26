@@ -1,10 +1,9 @@
 package com.taller1.colegioJMA2.rolesComponent.services;
 
 
-import com.taller1.colegioJMA2.rolesComponent.dto.CreateRoleRequest;
-import com.taller1.colegioJMA2.rolesComponent.dto.CreateRoleResponse;
-import com.taller1.colegioJMA2.rolesComponent.dto.RolDto;
-import com.taller1.colegioJMA2.rolesComponent.dto.UpdateRolRequest;
+import com.taller1.colegioJMA2.model.UsuariosModel;
+import com.taller1.colegioJMA2.repository.UsuariosRepo;
+import com.taller1.colegioJMA2.rolesComponent.dto.*;
 import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
 import com.taller1.colegioJMA2.rolesComponent.respositorys.RolRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +22,8 @@ public class RolServiceImpl implements RolService {
 
     @Autowired
     private RolRepository rolRepository;
+    @Autowired
+    private UsuariosRepo usuariosRepo;
 
     @Override
     public List<RolEntity> listar() {
@@ -131,7 +133,7 @@ public class RolServiceImpl implements RolService {
         rolRepository.save(rol);
     }
 
-    // Nuevo método para buscar roles por nombre
+    // Nuevo metodo para buscar roles por nombre
     public List<RolDto> buscarRolesPorNombre(String nombre) {
         if (nombre == null || nombre.trim().isEmpty()) {
             return rolRepository.findAllByOrderByNombreAsc();
@@ -142,5 +144,50 @@ public class RolServiceImpl implements RolService {
     @Override
     public List<RolDto> findByEstado(String estado) {
         return rolRepository.findByEstado(estado);
+    }
+
+    // Roles de un usuario específico
+    public List<RolDto> getRolesForUser(String login) {
+        return rolRepository.findRolesAssignedToUser(login)
+                .stream()
+                .map(RolDto::new)
+                .collect(Collectors.toList());
+    }
+
+    // Roles que NO están asignados a ningún usuario
+    public List<RolDto> getUnassignedRoles() {
+        return rolRepository.findRolesNotAssignedToAnyUser()
+                .stream()
+                .map(RolDto::new)
+                .collect(Collectors.toList());
+    }
+
+    // Roles que están asignados a cualquier usuario (al menos uno)
+    public List<RolDto> getRolesAssignedToAnyUser() {
+        return rolRepository.findAllRolesAssignedToAnyUser()
+                .stream()
+                .map(RolDto::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UsuariosModel asignarRoles(AsignarRolesUsuarioDTO dto) {
+
+        // Buscar usuario
+        UsuariosModel usuario = usuariosRepo.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Buscar roles
+        List<RolEntity> roles = rolRepository.findAllById(dto.getRolesIds());
+
+        if (roles.isEmpty()) {
+            throw new RuntimeException("Ningún rol válido encontrado");
+        }
+
+        // Asignar roles (reemplaza roles actuales)
+        usuario.setRoles(roles);
+
+        // Guardar
+        return usuariosRepo.save(usuario);
     }
 }

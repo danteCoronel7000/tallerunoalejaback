@@ -1,10 +1,8 @@
 package com.taller1.colegioJMA2.rolesComponent.services;
 
 
-import com.taller1.colegioJMA2.rolesComponent.dto.CreateRoleRequest;
-import com.taller1.colegioJMA2.rolesComponent.dto.CreateRoleResponse;
-import com.taller1.colegioJMA2.rolesComponent.dto.RolDto;
-import com.taller1.colegioJMA2.rolesComponent.dto.UpdateRolRequest;
+import com.taller1.colegioJMA2.model.UsuariosModel;
+import com.taller1.colegioJMA2.rolesComponent.dto.*;
 import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +25,8 @@ public interface RolService {
     void deshabilitarRol(Integer codr);
     List<RolDto> buscarRolesPorNombre(String nombre);
     List<RolDto> findByEstado(String estado);
+    List<RolDto> getRolesForUser(String login);
+    List<RolDto> getUnassignedRoles();
+    List<RolDto> getRolesAssignedToAnyUser();
+    UsuariosModel asignarRoles(AsignarRolesUsuarioDTO dto);
 }
