@@ -6,14 +6,14 @@ import com.taller1.colegioJMA2.repository.UsuariosRepo;
 import com.taller1.colegioJMA2.rolesComponent.dto.*;
 import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
 import com.taller1.colegioJMA2.rolesComponent.respositorys.RolRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -171,23 +171,70 @@ public class RolServiceImpl implements RolService {
     }
 
     @Override
+    @Transactional
     public UsuariosModel asignarRoles(AsignarRolesUsuarioDTO dto) {
 
         // Buscar usuario
         UsuariosModel usuario = usuariosRepo.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Buscar roles
-        List<RolEntity> roles = rolRepository.findAllById(dto.getRolesIds());
+        // Obtener roles actuales del usuario (Set para evitar duplicados)
+        Set<RolEntity> rolesActuales = new HashSet<>(usuario.getRoles());
 
-        if (roles.isEmpty()) {
+        // Buscar roles enviados en el DTO
+        List<RolEntity> rolesNuevosSolicitados = rolRepository.findAllById(dto.getRolesIds());
+
+        if (rolesNuevosSolicitados.isEmpty()) {
             throw new RuntimeException("Ningún rol válido encontrado");
         }
 
-        // Asignar roles (reemplaza roles actuales)
-        usuario.setRoles(roles);
+        // Agregar solo roles que NO tenga ya el usuario
+        for (RolEntity rol : rolesNuevosSolicitados) {
+            if (!rolesActuales.contains(rol)) {
+                rolesActuales.add(rol);
+            }
+        }
+
+        // Actualizar roles final
+        usuario.setRoles(new ArrayList<>(rolesActuales));
 
         // Guardar
         return usuariosRepo.save(usuario);
     }
+
+
+    @Override
+    @Transactional
+    public UsuariosModel desasignarRoles(AsignarRolesUsuarioDTO dto) {
+
+        // Buscar usuario
+        UsuariosModel usuario = usuariosRepo.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Obtener roles actuales del usuario
+        Set<RolEntity> rolesActuales = new HashSet<>(usuario.getRoles());
+
+        // Buscar roles a eliminar en el DTO
+        List<RolEntity> rolesAEliminar = rolRepository.findAllById(dto.getRolesIds());
+
+        if (rolesAEliminar.isEmpty()) {
+            throw new RuntimeException("Ningún rol válido encontrado para desasignar");
+        }
+
+        // Eliminar los roles especificados
+        for (RolEntity rol : rolesAEliminar) {
+            rolesActuales.remove(rol);
+        }
+
+        // Actualizar roles final (no puede quedar sin al menos un rol)
+        if (rolesActuales.isEmpty()) {
+            throw new RuntimeException("El usuario debe tener al menos un rol asignado");
+        }
+
+        usuario.setRoles(new ArrayList<>(rolesActuales));
+
+        // Guardar
+        return usuariosRepo.save(usuario);
+    }
+
 }

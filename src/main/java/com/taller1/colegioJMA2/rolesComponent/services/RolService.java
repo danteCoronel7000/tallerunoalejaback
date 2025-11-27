@@ -29,4 +29,5 @@ public interface RolService {
     List<RolDto> getUnassignedRoles();
     List<RolDto> getRolesAssignedToAnyUser();
     UsuariosModel asignarRoles(AsignarRolesUsuarioDTO dto);
+    UsuariosModel desasignarRoles(AsignarRolesUsuarioDTO dto);
 }

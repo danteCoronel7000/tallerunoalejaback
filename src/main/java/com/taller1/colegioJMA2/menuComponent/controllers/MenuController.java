@@ -1,12 +1,10 @@
 package com.taller1.colegioJMA2.menuComponent.controllers;
 
 
-import com.taller1.colegioJMA2.menuComponent.dto.CreateMenuRequest;
-import com.taller1.colegioJMA2.menuComponent.dto.CreateMenuResponse;
-import com.taller1.colegioJMA2.menuComponent.dto.MenuDto;
-import com.taller1.colegioJMA2.menuComponent.dto.UpdateMenuRequest;
+import com.taller1.colegioJMA2.menuComponent.dto.*;
 import com.taller1.colegioJMA2.menuComponent.entitys.MenuEntity;
 import com.taller1.colegioJMA2.menuComponent.services.MenuService;
+import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -105,6 +103,12 @@ public class MenuController {
         return ResponseEntity.ok("Éxito: Menu deshabilitado correctamente");
     }
 
+    @GetMapping("/estado/{estado}")
+    public ResponseEntity<List<MenuDto>> getMenusPorEstado(@PathVariable String estado) {
+        List<MenuDto> menus = menuService.findByEstado(estado);
+        return ResponseEntity.ok(menus);
+    }
+
     // Nuevo endpoint para buscar menus
     @GetMapping("/buscar")
     public ResponseEntity<List<MenuDto>> buscarMenus(
@@ -113,9 +117,33 @@ public class MenuController {
         return ResponseEntity.ok(menus);
     }
 
-    @GetMapping("/estado/{estado}")
-    public ResponseEntity<List<MenuDto>> getMenusPorEstado(@PathVariable String estado) {
-        List<MenuDto> menus = menuService.findByEstado(estado);
-        return ResponseEntity.ok(menus);
+    // Obtener menús de un rol específico
+    @GetMapping("/rol/{codr}")
+    public List<MenuDto> getRoleMenus(@PathVariable Integer codr) {
+        return menuService.getMenusForRole(codr);
+    }
+
+    // Obtener menús que NO están asignados a ningún rol
+    @GetMapping("/sin/asignar")
+    public List<MenuDto> getUnassignedMenus() {
+        return menuService.getUnassignedMenus();
+    }
+
+    // Obtener todos los menús que están asignados a cualquier rol
+    @GetMapping("/asignados")
+    public List<MenuDto> getMenusAssignedToAnyRole() {
+        return menuService.getMenusAssignedToAnyRole();
+    }
+
+    @PostMapping("/asignar/menus")
+    public ResponseEntity<?> asignarMenus(@RequestBody AsignarMenusRolDTO dto) {
+        RolEntity actualizado = menuService.asignarMenus(dto);
+        return ResponseEntity.ok(actualizado);
+    }
+
+    @PostMapping("/desasignar/menus")
+    public ResponseEntity<?> desasignarMenus(@RequestBody AsignarMenusRolDTO dto) {
+        RolEntity actualizado = menuService.desasignarMenus(dto);
+        return ResponseEntity.ok(actualizado);
     }
 }

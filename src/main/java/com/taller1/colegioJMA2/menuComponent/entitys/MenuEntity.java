@@ -1,6 +1,7 @@
 package com.taller1.colegioJMA2.menuComponent.entitys;
 
 
+import com.taller1.colegioJMA2.procesosComponent.procesoEntity.ProcesoEntity;
 import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,11 +27,30 @@ public class MenuEntity {
     @Column(nullable = false)
     private String estado;
 
+    @ManyToMany(mappedBy = "menus")   // inverso
+    private Set<RolEntity> roles;
+
+    // Dueño de la relación
     @ManyToMany
     @JoinTable(
-            name = "menu_roles",
-            joinColumns = @JoinColumn(name = "menu_id", referencedColumnName = "codm"),
-            inverseJoinColumns = @JoinColumn(name = "rol_id", referencedColumnName = "codr")
+            name = "mepro",
+            joinColumns = @JoinColumn(name = "codm", referencedColumnName = "codm"),
+            inverseJoinColumns = @JoinColumn(name = "codp", referencedColumnName = "codp")
     )
-    private Set<RolEntity> roles;
+    private Set<ProcesoEntity> procesos;
+
+    // --- equals y hashCode ---
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MenuEntity)) return false;
+        MenuEntity that = (MenuEntity) o;
+        return codm != null && codm.equals(that.codm);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31;
+    }
 }
+

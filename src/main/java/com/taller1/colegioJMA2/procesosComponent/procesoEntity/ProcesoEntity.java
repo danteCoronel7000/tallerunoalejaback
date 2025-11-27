@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Set;
-
 @Entity
 @Table(name = "procesos")
 @Data
@@ -32,11 +31,20 @@ public class ProcesoEntity {
     @Column(nullable = false)
     private String estado;
 
-    @ManyToMany
-    @JoinTable(
-            name = "proceso_menus",
-            joinColumns = @JoinColumn(name = "proceso_id", referencedColumnName = "codp"),
-            inverseJoinColumns = @JoinColumn(name = "menu_id", referencedColumnName = "codm")
-    )
+    // Lado inverso — NO tiene JoinTable
+    @ManyToMany(mappedBy = "procesos")
     private Set<MenuEntity> menus;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ProcesoEntity)) return false;
+        ProcesoEntity that = (ProcesoEntity) o;
+        return codp != null && codp.equals(that.codp);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31;
+    }
 }

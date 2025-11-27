@@ -1,27 +1,29 @@
 package com.taller1.colegioJMA2.menuComponent.services;
 
 
-import com.taller1.colegioJMA2.menuComponent.dto.CreateMenuRequest;
-import com.taller1.colegioJMA2.menuComponent.dto.CreateMenuResponse;
-import com.taller1.colegioJMA2.menuComponent.dto.MenuDto;
-import com.taller1.colegioJMA2.menuComponent.dto.UpdateMenuRequest;
+import com.taller1.colegioJMA2.menuComponent.dto.*;
 import com.taller1.colegioJMA2.menuComponent.entitys.MenuEntity;
 import com.taller1.colegioJMA2.menuComponent.repository.MenuRepository;
+import com.taller1.colegioJMA2.rolesComponent.entyties.RolEntity;
+import com.taller1.colegioJMA2.rolesComponent.respositorys.RolRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
 
     @Autowired
-    private MenuRepository menuRepository;
+    private MenuRepository menuRepository;@Autowired
+    private RolRepository rolRepository;
+
 
     @Override
     public List<MenuEntity> listar() {
@@ -130,7 +132,13 @@ public class MenuServiceImpl implements MenuService {
         menuRepository.save(menu);
     }
 
-    // Nuevo método para buscar menus por nombre
+    @Override
+    public List<MenuDto> findByEstado(String estado) {
+        return menuRepository.findByEstado(estado);
+    }
+
+
+    // Nuevo metodo para buscar menus por nombre
     public List<MenuDto> buscarMenusPorNombre(String nombre) {
         if (nombre == null || nombre.trim().isEmpty()) {
             return menuRepository.findAllByOrderByNombreAsc();
@@ -138,10 +146,94 @@ public class MenuServiceImpl implements MenuService {
         return menuRepository.findByNombreContainingIgnoreCase(nombre.trim());
     }
 
+
+    // Menús de un rol específico
     @Override
-    public List<MenuDto> findByEstado(String estado) {
-        return menuRepository.findByEstado(estado);
+    public List<MenuDto> getMenusForRole(Integer codr) {
+        return menuRepository.findMenusAssignedToRole(codr)
+                .stream()
+                .map(MenuDto::new)
+                .collect(Collectors.toList());
     }
 
+    // Menús que NO están asignados a ningún rol
+    @Override
+    public List<MenuDto> getUnassignedMenus() {
+        return menuRepository.findMenusNotAssignedToAnyRole()
+                .stream()
+                .map(MenuDto::new)
+                .collect(Collectors.toList());
+    }
 
+    // Menús que están asignados a cualquier rol (al menos uno)
+    @Override
+    public List<MenuDto> getMenusAssignedToAnyRole() {
+        return menuRepository.findAllMenusAssignedToAnyRole()
+                .stream()
+                .map(MenuDto::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public RolEntity asignarMenus(AsignarMenusRolDTO dto) {
+        System.out.println("dto: "+dto);
+        // Buscar rol
+        RolEntity rol = rolRepository.findById(dto.getRolId())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        // Obtener menús actuales del rol (Set para evitar duplicados)
+        Set<MenuEntity> menusActuales = new HashSet<>(rol.getMenus());
+
+        // Buscar menús enviados en el DTO
+        List<MenuEntity> menusNuevosSolicitados = menuRepository.findAllById(dto.getMenusIds());
+
+        if (menusNuevosSolicitados.isEmpty()) {
+            throw new RuntimeException("Ningún menú válido encontrado");
+        }
+
+        // Agregar solo menús que NO tenga ya el rol
+        for (MenuEntity menu : menusNuevosSolicitados) {
+            if (!menusActuales.contains(menu)) {
+                menusActuales.add(menu);
+            }
+        }
+
+        // Actualizar menús final
+        rol.setMenus(new HashSet<>(menusActuales));
+
+
+        // Guardar
+        return rolRepository.save(rol);
+    }
+
+    @Override
+    @Transactional
+    public RolEntity desasignarMenus(AsignarMenusRolDTO dto) {
+
+        // Buscar rol
+        RolEntity rol = rolRepository.findById(dto.getRolId())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        // Obtener menús actuales del rol
+        Set<MenuEntity> menusActuales = new HashSet<>(rol.getMenus());
+
+        // Buscar menús a eliminar en el DTO
+        List<MenuEntity> menusAEliminar = menuRepository.findAllById(dto.getMenusIds());
+
+        if (menusAEliminar.isEmpty()) {
+            throw new RuntimeException("Ningún menú válido encontrado para desasignar");
+        }
+
+        // Eliminar los menús especificados
+        for (MenuEntity menu : menusAEliminar) {
+            menusActuales.remove(menu);
+        }
+
+        // Actualizar menús final (puede quedar sin menús asignados)
+        rol.setMenus(new HashSet<>(menusActuales));
+
+        // Guardar
+        return rolRepository.save(rol);
+    }
 }

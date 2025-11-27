@@ -141,6 +141,12 @@ public class RolController {
         return ResponseEntity.ok(actualizado);
     }
 
+    @PostMapping("/desasignar/roles")
+    public ResponseEntity<?> desasignarRoles(@RequestBody AsignarRolesUsuarioDTO dto) {
+        UsuariosModel actualizado = rolService.desasignarRoles(dto);
+        return ResponseEntity.ok(actualizado);
+    }
+
 }
 
 
