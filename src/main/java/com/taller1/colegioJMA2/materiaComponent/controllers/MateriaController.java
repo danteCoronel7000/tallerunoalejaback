@@ -26,6 +26,11 @@ public class MateriaController {
     @Autowired
     private MateriaService materiaService;
 
+    @GetMapping("/listar/all")
+    public List<MateriaEntity> listar() {
+        return materiaService.listar();
+    }
+
     @PostMapping("/create")
     public CreateMateriaResponse createMateria(@RequestBody CreateMateriaRequest request,
                                                @RequestHeader(value = "Authorization", required = false) String authHeader) {

@@ -21,4 +21,4 @@ public interface MateriaService {
     void deshabilitarMateria(Integer copmat);
     List<MateriaDto> buscarMateriasPorNombre(String nombre);
     List<MateriaDto> findByEstado(String estado);
-}
+    List<MateriaEntity> listar();}

@@ -109,4 +109,9 @@ public class MateriaServiceImpl implements MateriaService {
     public List<MateriaDto> findByEstado(String estado) {
         return materiaRepository.findByEstado(estado);
     }
+
+    @Override
+    public List<MateriaEntity> listar() {
+        return materiaRepository.findAll();
+    }
 }
